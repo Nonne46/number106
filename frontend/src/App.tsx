@@ -47,7 +47,7 @@ function App() {
     const [pitch, setPitch] = useState("");
     const [device, setDevice] = useState("");
     const [text, setText] = useState("");
-    const [prevText, setPrevText] = useState("");
+    const [prevText, setPrevText] = useState([""]);
 
     const updateSpeaker = (e: any) => setSpeaker(e.target.value);
     const updatePitch = (e: any) => setPitch(e.target.value);
@@ -73,15 +73,19 @@ function App() {
             })
             .catch((err) => toast.error(err));
 
+            let someText = prevText
+            someText.push(text);
         if (text != "")
         {
-            setPrevText(text);
+            setPrevText(someText);
         }
         setText("");
     }
 
     function prev() {
-        setText(prevText);
+        let someText = prevText
+        setText(someText.pop() as string);
+        setPrevText(someText)
     }
 
     return (
