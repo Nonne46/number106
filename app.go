@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nullneso/number106/internal/mixer"
-	"github.com/nullneso/number106/internal/tts"
+	"github.com/Nonne46/number106/internal/mixer"
+	"github.com/Nonne46/number106/internal/tts"
 )
 
 // App struct

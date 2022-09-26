@@ -1,4 +1,4 @@
-module github.com/nullneso/number106
+module github.com/Nonne46/number106
 
 go 1.17
 
