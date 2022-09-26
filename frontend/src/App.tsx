@@ -32,6 +32,7 @@ function Radio(props: any) {
                             className="nes-radio"
                             value={item}
                             name={props.name}
+
                         />
                         <span>{item}</span>
                     </label>
@@ -72,7 +73,10 @@ function App() {
             })
             .catch((err) => toast.error(err));
 
-        setPrevText(text);
+        if (text != "")
+        {
+            setPrevText(text);
+        }
         setText("");
     }
 
