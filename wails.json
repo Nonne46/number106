@@ -1,0 +1,12 @@
+{
+  "name": "number106",
+  "outputfilename": "number106",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Nonne46",
+    "email": "42183296+Nonne46@users.noreply.github.com"
+  }
+}
