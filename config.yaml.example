@@ -1,0 +1,5 @@
+num:
+  url: "https://pubtts.ss14.su/api/v1/tts/"
+  token: ""
+  cache: "./client_cache"
+ 

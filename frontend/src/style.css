@@ -24,3 +24,8 @@
     float: left;
     width: 33.33%;
 }
+
+.effects {
+    float: none;
+    width: 100%;
+}
