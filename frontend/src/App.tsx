@@ -84,18 +84,12 @@ function Select(props: any) {
   );
 }
 
-async function getFirstHalfSpeakers() {
+async function getSpeakers() {
   let meow = await GetSpeakers();
 
   meow.voices[0].speakers[0];
 
-  return meow.voices.slice(0, meow.voices.length / 2);
-}
-
-async function getSecondHalfSpeakers() {
-  let meow = await GetSpeakers();
-
-  return meow.voices.slice(meow.voices.length / 2);
+  return meow.voices;
 }
 
 function App() {
@@ -114,11 +108,7 @@ function App() {
   const updateText = (e: any) => setText(e.target.value);
 
   const Speakers = useMemo(
-    () => <Radio getItems={getFirstHalfSpeakers} name="speaker" />,
-    []
-  );
-  const Speakers2 = useMemo(
-    () => <Radio getItems={getSecondHalfSpeakers} name="speaker" />,
+    () => <Radio getItems={getSpeakers} name="speaker" />,
     []
   );
   // const Pitches = useMemo(
@@ -180,9 +170,6 @@ function App() {
         >
           <h3 className="title">Speakers</h3>
           {Speakers}
-        </section>
-        <section className="nes-container speakers" onChange={updateSpeaker}>
-          {Speakers2}
         </section>
 
         {/* <section
