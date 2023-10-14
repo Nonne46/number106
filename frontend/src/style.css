@@ -5,14 +5,56 @@
     vertical-align: baseline;
 } */
 
+body {
+    background: #211d1d !important;
+}
+
+#App, .title {
+    background: #3c3836 !important;
+    color: #f9efc6;
+    font-size: 80% !important;
+}
+
+.title {
+    border: 1px solid #f9efc6;
+    font-size: 125% !important;
+}
+
+.nes-container {
+    border: 1px solid #f9efc6 !important;
+}
+
+.nes-container .items {
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.nes-container .items .item {
+    flex: 33%;
+    transition: 0.2s;
+}
+
+.nes-container .items .item label {
+    margin: 4px !important;
+}
+
+.nes-container .items .item:hover {
+    background: #f9efc6;
+    color: #3c3836;
+    outline: 1px solid #f9efc6;
+}
+
 .settings {
     display: flex;
-    flex-flow: row wrap;
+    flex-wrap: wrap;
+    flex-direction: row;
+    gap: 8px;
 }
 
 .speakers {
     float: left;
-    width: 33.33%;
+    width: 75%;
 }
 
 .pitches {
@@ -22,7 +64,12 @@
 
 .devices {
     float: left;
-    width: 33.33%;
+    width: 24%;
+}
+
+.devices .items {
+    flex-wrap: nowrap;
+    flex-direction: column;
 }
 
 .effects {
