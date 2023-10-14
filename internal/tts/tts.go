@@ -3,19 +3,54 @@ package tts
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 	"os"
+	"time"
 
+	"github.com/Nonne46/number106/internal/utls"
 	"github.com/gosimple/slug"
+	"github.com/imroc/req/v3"
 )
 
-const (
-	URL       = "http://134.249.87.182:8800/tts?"
-	cachePath = "./client_cache"
-)
+// const (
+// 	URL       = "https://pubtts.ss14.su/api/v1/tts/"
+// 	cachePath = "./client_cache"
+// )
 
-func GetTTS(speaker, pitch, text string) (string, error) {
+type TTS struct {
+	*req.Client
+	CachePath string
+	Speakers  *Speakers
+	Effects   []string
+}
+
+type TTSConfig struct {
+	URL       string
+	CachePath string
+	Token     string
+}
+
+var DefaultConfig TTSConfig = TTSConfig{
+	URL:       "http://127.0.0.1:2386/",
+	CachePath: "./client_cache",
+	Token:     "",
+}
+
+func NewTTS(config TTSConfig) TTS {
+	tts := TTS{
+		CachePath: config.CachePath,
+		Speakers:  nil,
+		Effects:   nil,
+		Client: req.C().
+			SetBaseURL(config.URL).
+			SetCommonRetryCount(3).
+			SetCommonRetryFixedInterval(1 * time.Second).
+			SetCommonBearerAuthToken(config.Token),
+	}
+
+	return tts
+}
+
+func (t *TTS) GetTTS(speaker, pitch, text, effect string) (string, error) {
 	if len(speaker) == 0 {
 		return "", fmt.Errorf("Empty speaker")
 	}
@@ -28,13 +63,12 @@ func GetTTS(speaker, pitch, text string) (string, error) {
 		return "", fmt.Errorf("Empty text")
 	}
 
-	// Create cache
-	createCacheDir()
+	crcHash := utls.CRC32Hash(speaker + pitch + text + effect)
 
 	// Generate filename
-	slug.MaxLength = 100
-	filename := fmt.Sprintf("%s_%s.wav", slug.Make(text), pitch)
-	audioPath := fmt.Sprintf("%s/%s/%s", cachePath, speaker, filename)
+	slug.MaxLength = 50
+	filename := fmt.Sprintf("%s_%s.wav", slug.Make(text), crcHash)
+	audioPath := fmt.Sprintf("%s/%s/%s", t.CachePath, speaker, filename)
 
 	// Check file is in cache
 	_, err := os.Stat(audioPath)
@@ -42,20 +76,17 @@ func GetTTS(speaker, pitch, text string) (string, error) {
 		return audioPath, nil
 	}
 
-	// Download file
-	params := url.Values{}
-	params.Add("speaker", speaker)
-	params.Add("pitch", pitch)
-	params.Add("text", text)
-
-	resp, err := http.Get(URL + params.Encode())
-	if err != nil {
-		return "", err
-	}
+	resp, err := t.R().
+		AddQueryParam("speaker", speaker).
+		AddQueryParam("pitch", pitch).
+		AddQueryParam("text", text).
+		AddQueryParam("effect", effect).
+		Get("/")
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("bad status: %s", resp.Status)
+	if !resp.IsSuccessState() {
+		err = fmt.Errorf("bad status code %q, body:%s", resp.StatusCode, resp.String())
+		return "", err
 	}
 
 	// Save file
@@ -73,30 +104,27 @@ func GetTTS(speaker, pitch, text string) (string, error) {
 	return audioPath, nil
 }
 
-func createCacheDir() {
-	_ = os.Mkdir(cachePath, os.ModePerm)
-	for _, speaker := range GetSpeakers() {
-		speakerPath := fmt.Sprintf("%s/%s", cachePath, speaker)
-		_ = os.Mkdir(speakerPath, os.ModePerm)
-	}
-}
-
 // GetSpeakers ...
-func GetSpeakers() []string {
-	return []string{
-		"aidar",
-		"baya",
-		"kseniya",
-		"xenia",
-		"eugene",
-		"mykyta",
-		"ru_random",
-		"ua_random",
+func (t *TTS) GetSpeakers() (*Speakers, error) {
+	if t.Speakers != nil {
+		return t.Speakers, nil
 	}
+
+	var speakers Speakers
+	err := t.Get("/speakers").
+		Do().
+		Into(&speakers)
+	if err != nil {
+		return nil, err
+	}
+
+	t.Speakers = &speakers
+
+	return t.Speakers, nil
 }
 
 // GetPitches ...
-func GetPitches() []string {
+func (t *TTS) GetPitches() []string {
 	return []string{
 		"x-low",
 		"low",
@@ -105,4 +133,40 @@ func GetPitches() []string {
 		"x-high",
 		"robot",
 	}
+}
+
+// GetEffects ...
+func (t *TTS) GetEffects() ([]string, error) {
+	if t.Effects != nil {
+		return t.Effects, nil
+	}
+
+	var effects Effects
+	err := t.
+		Get("/effects").
+		Do().
+		Into(&effects)
+	if err != nil {
+		return nil, err
+	}
+
+	t.Effects = effects.Effects
+
+	return t.Effects, nil
+}
+
+func (t *TTS) CreateCacheDir() error {
+	_ = os.Mkdir(t.CachePath, os.ModePerm)
+
+	speakers, err := t.GetSpeakers()
+	if err != nil {
+		return err
+	}
+
+	for _, speaker := range speakers.Voices {
+		speakerPath := fmt.Sprintf("%s/%s", t.CachePath, speaker.Speakers[0])
+		_ = os.Mkdir(speakerPath, os.ModePerm)
+	}
+
+	return nil
 }

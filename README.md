@@ -1,5 +1,9 @@
 # README
 
+```bash
+wails build -ldflags="-s -w" -webview2 embed -trimpath -tags static -upx
+```
+
 ## About
 
 This is the official Wails React-TS template.

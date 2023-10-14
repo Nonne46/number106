@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 
+	"github.com/Nonne46/number106/internal/config"
 	"github.com/Nonne46/number106/internal/mixer"
 	"github.com/Nonne46/number106/internal/tts"
 )
@@ -11,11 +13,30 @@ import (
 // App struct
 type App struct {
 	ctx context.Context
+	tts *tts.TTS
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	return &App{}
+	cfg := config.NewPaerser("./app.yaml")
+	if err := cfg.Load(); err != nil {
+		log.Panicf("Failed loading config: %s", err.Error())
+	}
+
+	url := cfg.Instance().Num.URL
+	token := cfg.Instance().Num.Token
+	cache := cfg.Instance().Num.Cache
+
+	tts := tts.NewTTS(tts.TTSConfig{URL: url, Token: token, CachePath: cache})
+
+	// Fetch some shit
+	tts.GetSpeakers()
+	tts.GetEffects()
+
+	// Create cache
+	tts.CreateCacheDir()
+
+	return &App{tts: &tts}
 }
 
 // startup is called when the app starts. The context is saved
@@ -25,13 +46,18 @@ func (a *App) startup(ctx context.Context) {
 }
 
 // GetSpeakers ...
-func (a *App) GetSpeakers() []string {
-	return tts.GetSpeakers()
+func (a *App) GetSpeakers() (*tts.Speakers, error) {
+	return a.tts.GetSpeakers()
 }
 
 // GetPitches ...
 func (a *App) GetPitches() []string {
-	return tts.GetPitches()
+	return a.tts.GetPitches()
+}
+
+// GetEffects ...
+func (a *App) GetEffects() ([]string, error) {
+	return a.tts.GetEffects()
 }
 
 // GetDevices ...
@@ -42,8 +68,6 @@ func (a *App) GetDevices() ([]string, error) {
 	}
 
 	return devices, nil
-
-	// return []string{"a", "b"}
 }
 
 // PlayAudio ...
@@ -70,8 +94,8 @@ func (a *App) IsPlaying() bool {
 }
 
 // GetTTS ...
-func (a *App) GetTTS(speaker, pitch, text string) (string, error) {
-	audioPath, err := tts.GetTTS(speaker, pitch, text)
+func (a *App) GetTTS(speaker, pitch, text, effect string) (string, error) {
+	audioPath, err := a.tts.GetTTS(speaker, pitch, text, effect)
 	if err != nil {
 		return "", err
 	}
